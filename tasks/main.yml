@@ -1,0 +1,28 @@
+---
+# Creates group for SFTP users.
+- name: SFTP-Server | Create sftp user group
+  group:
+    name: "{{ sftp_group_name }}"
+    state: present
+
+# Necessary for chrooting of SFTP users.
+- name: SFTP-Server | Alter sftp subsystem entry
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    regexp: '^Subsystem(\s+)sftp'
+    line: "Subsystem sftp internal-sftp -f AUTH -l VERBOSE"
+    state: present
+  notify: SFTP-Server | Restart sshd
+
+- name: SFTP-Server | Add sshd_config block
+  blockinfile:
+    dest: /etc/ssh/sshd_config
+    marker: '# {mark} SFTP-Server {{ sftp_group_name }} block'
+    block: |
+      Match Group {{ sftp_group_name }}
+          ChrootDirectory {{ sftp_chroot_dir }}
+          AllowTCPForwarding no
+          X11Forwarding no
+          ForceCommand internal-sftp {{ sftp_enable_logging | ternary('-l VERBOSE', '') }}
+          PasswordAuthentication {{ sftp_allow_passwords | ternary('yes', 'no') }}
+  notify: SFTP-Server | Restart sshd

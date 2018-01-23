@@ -1,0 +1,5 @@
+---
+sftp_group_name: sftpusers
+sftp_allow_passwords: False
+sftp_enable_logging: False
+sftp_nologin_shell: /sbin/nologin
